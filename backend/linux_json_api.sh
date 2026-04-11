@@ -661,11 +661,23 @@ user_accounts() {
   $ECHO [ ${result%?} ] | _parseAndPrint
 }
 
+process_count() {
+  # Count all running processes (excluding the header line)
+  local count=$($PS aux --no-headers 2>/dev/null | wc -l)
+
+  # Fallback: count entries in /proc that are PIDs (numeric directories)
+  if [ -z "$count" ] || [ "$count" -eq 0 ]; then
+    count=$(ls -d /proc/[0-9]* 2>/dev/null | wc -l)
+  fi
+
+  $ECHO "$count" | _parseAndPrint
+}
+
 fnCalled="$1"
 
 # Check if the function call is indeed a function.
 if [ -n "$(type -t $fnCalled)" ] && [ "$(type -t $fnCalled)" = function ]; then
     ${fnCalled}
 else
-    echo '{\"success\":false,\"status\":\"Invalid module\"}'
+    echo '{"success":false,"status":"Invalid module"}'
 fi

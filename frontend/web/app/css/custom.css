@@ -523,3 +523,273 @@ input.filter-box:focus {
     }
     .custom-card { grid-column: span 1 !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   AI INSIGHTS CARD
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.card-ai-insights {
+    grid-column: span 6;
+}
+
+.ai-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+}
+
+.ai-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* ── Metric status grid ── */
+.ai-status-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ai-metric-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+.ai-metric-name {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+.ai-badge {
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.ai-badge-normal   { background: var(--stable-bg); color: var(--stable-text); }
+.ai-badge-warning  { background: var(--warn-bg);   color: var(--warn-text); }
+.ai-badge-anomaly  { background: var(--high-bg);   color: var(--high-text); }
+.ai-badge-learning { background: rgba(148, 163, 184, 0.12); color: var(--text-muted); }
+
+/* Overall status badge in card header */
+.ai-overall-normal  { background: var(--stable-bg); color: var(--stable-text); }
+.ai-overall-warning { background: var(--warn-bg);   color: var(--warn-text); }
+.ai-overall-anomaly {
+    background: var(--high-bg);
+    color: var(--high-text);
+    animation: ai-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes ai-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* ── Capacity forecasts ── */
+.ai-forecasts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ai-forecast-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 8px 14px;
+}
+
+.ai-forecast-val {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--high-text);
+}
+
+/* ── Recommendations list ── */
+.ai-advice-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.ai-advice-item {
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    border-radius: 8px;
+    line-height: 1.55;
+    border-left: 3px solid;
+}
+
+.ai-advice-critical {
+    background: rgba(239, 68, 68, 0.08);
+    border-left-color: var(--high-text);
+    color: var(--text-main);
+}
+
+.ai-advice-warning {
+    background: rgba(245, 158, 11, 0.08);
+    border-left-color: var(--warn-text);
+    color: var(--text-main);
+}
+
+.ai-advice-ok {
+    background: rgba(45, 212, 191, 0.05);
+    border-left-color: var(--teal);
+    color: var(--text-muted);
+}
+
+/* ── Empty / loading state ── */
+.ai-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0;
+    flex: 1;
+}
+
+.ai-collecting {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   NOTIFICATION TOASTS
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.kp-toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 420px;
+    width: calc(100vw - 48px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.kp-toast-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.kp-toast-hidden {
+    opacity: 0;
+    transform: translateX(24px);
+    pointer-events: none;
+}
+
+.kp-toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px 4px;
+}
+
+.kp-toast-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.kp-toast-x {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.kp-toast-x:hover { color: var(--text-main); }
+
+.kp-toast {
+    background: rgba(11, 15, 25, 0.96);
+    backdrop-filter: blur(20px);
+    border-radius: 10px;
+    padding: 12px 16px;
+    border-left: 4px solid;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.kp-toast-critical {
+    border-left-color: var(--high-text);
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.kp-toast-warning {
+    border-left-color: var(--warn-text);
+    background: rgba(245, 158, 11, 0.12);
+}
+
+.kp-toast-info {
+    border-left-color: var(--teal);
+    background: rgba(45, 212, 191, 0.08);
+}
+
+.kp-toast-msg {
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-main);
+    display: block;
+}
+
+.kp-toast-dismiss {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.kp-toast-dismiss:hover { background: rgba(255, 255, 255, 0.1); }
+
+@media (max-width: 768px) {
+    .card-ai-insights { grid-column: span 1 !important; }
+    .kp-toast-container { top: 12px; right: 12px; width: calc(100vw - 24px); }
+}
