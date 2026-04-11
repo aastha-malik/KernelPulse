@@ -1,0 +1,79 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# KernelPulse — docker-compose.yml
+#
+# IMPORTANT — host-level access:
+#   KernelPulse reads /proc, /sys, /etc, and runs commands like ps, df, free,
+#   arp, ifconfig, lscpu, etc. to collect REAL host system metrics.
+#
+#   Three settings below are required for accurate host metrics:
+#     pid: "host"        → see all host processes (ps, top, etc.)
+#     network_mode: host → see host network interfaces (eth0, wlan0, …)
+#     privileged: true   → read /sys/class/* hardware sensors
+#
+#   With network_mode: host the container binds directly to the host port.
+#   Dashboard is available at:  http://localhost:8080
+#
+# Frontends:
+#   Only the React 19 SPA (frontend/web/react-src/) is compiled and served.
+#   The legacy AngularJS source (frontend/src/) is excluded via .dockerignore.
+#
+# Usage:
+#   docker compose up --build -d   # first run (builds image)
+#   docker compose up -d            # subsequent runs (uses cached image)
+#   docker compose logs -f          # tail logs
+#   docker compose down             # stop & remove container
+#   docker compose down -v          # also wipe the metrics database
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  kernelpulse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kernelpulse:latest
+    container_name: kernelpulse
+
+    # Share the host's PID namespace so ps/top see ALL host processes
+    pid: "host"
+
+    # Use the host network stack so interface names, IPs, and /proc/net/*
+    # reflect the real host — not the container's virtual network.
+    # The app binds to 0.0.0.0:8080 directly on the host.
+    network_mode: "host"
+
+    # Required to read hardware sensors (/sys/class/…) and run commands
+    # like ping, lastlog that need elevated capabilities.
+    privileged: true
+
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      # SQLite is written to /data so it persists across restarts via the
+      # named volume below. Do NOT point this at /app/backend — that would
+      # shadow the backend source code.
+      - METRICS_DB_PATH=/data/metrics.db
+      - AI_LEARNING_SAMPLES=20
+      - AI_ZSCORE_WARNING=2.0
+      - AI_ZSCORE_ANOMALY=3.0
+      - AI_WINDOW_SIZE=60
+
+    volumes:
+      # Named volume for the SQLite database ONLY — keeps metrics.db
+      # alive across container restarts and image rebuilds.
+      - kernelpulse_data:/data
+
+    restart: unless-stopped
+
+    # Matches the HEALTHCHECK in the Dockerfile
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/info')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  # To reset the ML learning database (e.g. after a major config change):
+  #   docker compose down -v && docker compose up --build -d
+  kernelpulse_data:

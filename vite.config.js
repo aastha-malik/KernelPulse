@@ -6,8 +6,10 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: '../../../frontend/web/app',
-    emptyOutDir: false,
-    // Default hashed filenames — browser always fetches fresh JS after rebuild
+    // true = wipes old Angular files before each build (safe for Docker
+    // and local dev; the outDir is outside Vite's root so this must be
+    // explicit)
+    emptyOutDir: true,
   },
   server: {
     port: 5173,

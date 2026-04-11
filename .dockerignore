@@ -1,0 +1,42 @@
+# ── Version control ───────────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── Node dependencies (re-installed inside the builder stage) ─────────────────
+node_modules
+
+# ── Pre-built frontend (rebuilt cleanly inside the builder stage) ─────────────
+frontend/web/app
+
+# ── Legacy AngularJS source (not used by the React/Vite build) ───────────────
+# The Angular source lives at frontend/src/ (NOT frontend/web/src/).
+# The Gulp build pipeline and Angular devDependencies are also unneeded.
+frontend/src
+gulpfile.js
+temp
+
+# ── Desktop app (GTK/GNOME — not relevant in a container) ─────────────────────
+frontend/desktop
+
+# ── Secrets and local config ──────────────────────────────────────────────────
+.env
+
+# ── Logs and OS noise ─────────────────────────────────────────────────────────
+*.log
+.DS_Store
+
+# ── Documentation (not needed at runtime) ────────────────────────────────────
+docs
+*.md
+README*
+ROADMAP*
+CHANGELOG*
+CONTRIBUTIONS*
+
+# ── Runtime artefacts that should never be baked into the image ───────────────
+backend/metrics.db
+
+# ── Python bytecode ───────────────────────────────────────────────────────────
+__pycache__
+*.pyc
+*.pyo

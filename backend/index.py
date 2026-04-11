@@ -27,7 +27,8 @@ import mimetypes
 
 
 parser = argparse.ArgumentParser(description='Simple Threaded HTTP server to run linux-dash.')
-parser.add_argument('--port', metavar='PORT', type=int, nargs='?', default=8080,
+parser.add_argument('--port', metavar='PORT', type=int, nargs='?',
+                    default=int(os.environ.get('PORT', 8080)),
                     help='Port to run the server on.')
 
 modulesSubPath = '/linux_json_api.sh'
@@ -42,9 +43,11 @@ if _ml_path not in sys.path:
 _detector = None
 try:
     from ai_module import SystemAnomalyDetector
-    _detector = SystemAnomalyDetector(
-        db_path=os.path.join(appRootPath, 'metrics.db')
+    _db_path = os.environ.get(
+        'METRICS_DB_PATH',
+        os.path.join(appRootPath, 'metrics.db')
     )
+    _detector = SystemAnomalyDetector(db_path=_db_path)
     print('[KernelPulse] AI anomaly detection ready.')
 except Exception as _e:
     print(f'[KernelPulse] ML module unavailable: {_e}')
