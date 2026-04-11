@@ -1,0 +1,24 @@
+# --- Original Rules ---
+node_modules/
+*.log
+*/linuxDash.min.js.map
+temp/
+
+# --- Python Specific (CRITICAL) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.env
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE Specific ---
+.vscode/
+.idea/
+*.swp

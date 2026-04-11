@@ -1,0 +1,56 @@
+{
+  "name": "kernelpulse",
+  "version": "1.0.0",
+  "description": "KernelPulse — AI-powered Linux monitoring dashboard with anomaly detection",
+  "main": "backend/index.js",
+  "bin": "backend/bin/linux-dash",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pickaboo10/KernelPulse.git"
+  },
+  "keywords": [
+    "linux",
+    "monitoring",
+    "dashboard",
+    "ai",
+    "anomaly-detection",
+    "sysadmin"
+  ],
+  "author": "pickaboo10",
+  "license": "UNLICENSED",
+  "private": true,
+  "bugs": {
+    "url": "https://github.com/pickaboo/KernelPulse/issues"
+  },
+  "scripts": {
+    "start": "gulp",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "homepage": "https://github.com/pickaboo10/KernelPulse",
+  "dependencies": {
+    "express": "^4.11.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.0",
+    "smoothie": "^1.36.1",
+    "websocket": "^1.0.23",
+    "yargs": "^8.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "angular": "1.3.4",
+    "angular-route": "1.3.4",
+    "del": "^2.2.0",
+    "gulp": "^4.0.2",
+    "gulp-angular-templatecache": "^1.8.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-cssmin": "^0.1.7",
+    "gulp-ng-annotate": "^2.0.0",
+    "gulp-uglify": "^1.5.3",
+    "gulp-util": "^3.0.7",
+    "sortablejs": "^1.4.2",
+    "vite": "^8.0.8"
+  }
+}
