@@ -2,10 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  root: 'frontend/react-src',
+  root: 'frontend/web/react-src',
   plugins: [react()],
   build: {
-    outDir: '../../frontend/app',
+    outDir: '../../../frontend/web/app',
     emptyOutDir: false,
     // Default hashed filenames — browser always fetches fresh JS after rebuild
   },

@@ -21,10 +21,10 @@ app.use(function(req, res, next) {
   next()
 })
 
-app.use(express.static(path.resolve(__dirname + '/../frontend/app/')))
+app.use(express.static(path.resolve(__dirname + '/../frontend/web/app/')))
 
 app.get('/', function (req, res) {
-	res.sendFile(path.resolve(__dirname + '/../frontend/app/index.html'))
+	res.sendFile(path.resolve(__dirname + '/../frontend/web/app/index.html'))
 })
 
 app.get('/websocket', function (req, res) {

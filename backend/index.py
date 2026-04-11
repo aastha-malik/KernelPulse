@@ -29,7 +29,7 @@ parser.add_argument('--port', metavar='PORT', type=int, nargs='?', default=8080,
 
 modulesSubPath = '/linux_json_api.sh'
 appRootPath = os.path.dirname(os.path.realpath(__file__))
-appStaticPath = os.path.join(os.path.dirname(appRootPath), 'frontend', 'app')
+appStaticPath = os.path.join(os.path.dirname(appRootPath), 'frontend', 'web', 'app')
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     pass
