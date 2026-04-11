@@ -6,7 +6,7 @@ angular.module('kernelPulse').config(['$routeProvider', function($routeProvider)
     });
 }]);
 
-angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '$interval', '$timeout', function($scope, server, $interval, $timeout) {
+angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '$interval', '$timeout', '$http', function($scope, server, $interval, $timeout, $http) {
     
     // Scoped Data Setup
     $scope.cpuStatus = 'STABLE';
@@ -30,6 +30,19 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
     $scope.tempStatus = 'OPTIMAL';
     $scope.processes = 0;
     $scope.loadAvg = 0;
+
+    // ── AI Insights State ─────────────────────────────────────────────────────
+    $scope.aiStatus = {};
+    $scope.aiAdvice = [];
+    $scope.aiExhaustion = {};
+    $scope.aiOverallLevel = 'normal';
+    $scope.aiOverallLabel = 'ALL NORMAL';
+    $scope.aiHasData = false;
+
+    // Toast notification state
+    $scope.toastMessages = [];
+    $scope.toastVisible = false;
+    var prevAdvice = [];
 
     // Sparkline configuration
     var cpuValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -88,7 +101,124 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
         return (mb / 1024).toFixed(1);
     };
 
-    // Data Fetchers
+    // ── AI Ingest — feed metric values to the ML backend ──────────────────────
+    function ingest(metric, value) {
+        var v = Number(value);
+        if (isNaN(v)) return;
+        $http.post('/api/ingest', { metric: metric, value: v }).catch(function() {});
+    }
+
+    // ── AI Polling — fetch alerts and insights from the ML backend ─────────────
+    function pollAlerts() {
+        $http.get('/api/alerts').then(function(resp) {
+            var data = resp.data;
+            if (data.error) return;
+
+            $scope.aiStatus = data.status || {};
+            $scope.aiAdvice = data.advice || [];
+            $scope.aiHasData = Object.keys($scope.aiStatus).length > 0 || $scope.aiAdvice.length > 0;
+
+            // Compute overall level
+            var values = Object.values($scope.aiStatus);
+            if (values.indexOf('ANOMALY') !== -1) {
+                $scope.aiOverallLevel = 'anomaly';
+                $scope.aiOverallLabel = 'ANOMALY DETECTED';
+            } else if (values.indexOf('WARNING') !== -1) {
+                $scope.aiOverallLevel = 'warning';
+                $scope.aiOverallLabel = 'WARNING';
+            } else {
+                $scope.aiOverallLevel = 'normal';
+                $scope.aiOverallLabel = 'ALL NORMAL';
+            }
+
+            // Detect new actionable alerts for toast notifications
+            var curr = $scope.aiAdvice;
+            var added = curr.filter(function(a) {
+                return prevAdvice.indexOf(a) === -1 &&
+                       a.indexOf('✅') !== 0 &&
+                       a.indexOf('🟢') !== 0;
+            });
+            if (added.length > 0) {
+                showToast(added);
+            }
+            prevAdvice = curr.slice();
+        }).catch(function() { /* server not up yet */ });
+    }
+
+    function pollInsights() {
+        $http.get('/api/anomaly').then(function(resp) {
+            var data = resp.data;
+            if (data.error) return;
+            $scope.aiExhaustion = data.exhaustion || {};
+        }).catch(function() { /* server not up yet */ });
+    }
+
+    // ── Toast Notification ────────────────────────────────────────────────────
+    var toastTimer = null;
+
+    function showToast(messages) {
+        $scope.toastMessages = messages.slice(0, 3);
+        $scope.toastVisible = true;
+        if (toastTimer) $timeout.cancel(toastTimer);
+        toastTimer = $timeout(function() {
+            $scope.toastVisible = false;
+        }, 6000);
+    }
+
+    $scope.dismissToast = function() {
+        if (toastTimer) $timeout.cancel(toastTimer);
+        $scope.toastVisible = false;
+    };
+
+    $scope.toastSeverity = function(msg) {
+        if (msg.indexOf('🔴') !== -1 || msg.indexOf('🚨') !== -1) return 'critical';
+        if (msg.indexOf('💧') !== -1 || msg.indexOf('⏱️') !== -1 ||
+            msg.indexOf('⚠️') !== -1 || msg.indexOf('⚡') !== -1) return 'warning';
+        return 'info';
+    };
+
+    // ── AI helper functions for the template ──────────────────────────────────
+    $scope.aiStatusEntries = function() {
+        var entries = [];
+        angular.forEach($scope.aiStatus, function(status, metric) {
+            entries.push({ metric: metric, status: status });
+        });
+        return entries;
+    };
+
+    $scope.aiExhaustionEntries = function() {
+        var entries = [];
+        angular.forEach($scope.aiExhaustion, function(data, metric) {
+            entries.push({ metric: metric, data: data });
+        });
+        return entries;
+    };
+
+    var METRIC_LABELS = {
+        cpu: 'CPU', ram: 'RAM', disk_read: 'Disk', disk_write: 'Disk Write',
+        net_rx: 'Net In', net_tx: 'Net Out', temp: 'Temp', load_avg: 'Load Avg'
+    };
+
+    $scope.metricLabel = function(metric) {
+        return METRIC_LABELS[metric] || metric.replace(/_/g, ' ').toUpperCase();
+    };
+
+    $scope.statusBadgeClass = function(status) {
+        if (status === 'ANOMALY') return 'ai-badge-anomaly';
+        if (status === 'WARNING') return 'ai-badge-warning';
+        if (status === 'LEARNING') return 'ai-badge-learning';
+        return 'ai-badge-normal';
+    };
+
+    $scope.adviceClass = function(msg) {
+        if (msg.indexOf('🔴') !== -1 || msg.indexOf('🚨') !== -1) return 'ai-advice-critical';
+        if (msg.indexOf('🟡') !== -1 || msg.indexOf('💧') !== -1 ||
+            msg.indexOf('⏱️') !== -1 || msg.indexOf('⚠️') !== -1 ||
+            msg.indexOf('⚡') !== -1) return 'ai-advice-warning';
+        return 'ai-advice-ok';
+    };
+
+    // Data Fetchers — each now calls ingest() to feed the AI
     function getCpuData() {
         server.get('cpu_utilization', function(resp) {
             $scope.cpuPercent = parseInt(resp);
@@ -103,6 +233,7 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
             }
             // Need a slight delay to ensure canvas is rendered initially
             $timeout(drawSparkline, 0);
+            ingest('cpu', $scope.cpuPercent);
         });
     }
 
@@ -111,6 +242,7 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
             $scope.memUsed = humanizeMbToGb(resp.used);
             $scope.memTotal = humanizeMbToGb(resp.total);
             $scope.memPercentage = (resp.used / resp.total) * 100;
+            ingest('ram', $scope.memPercentage);
         });
     }
 
@@ -119,16 +251,19 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
             // Find root or primary mount
             var primary = resp[0];
             for (var i = 0; i < resp.length; i++) {
-                if (resp[i].mounted_on === '/') {
+                var mp = resp[i].mounted_on || resp[i].mounted || '';
+                if (mp === '/') {
                     primary = resp[i];
                     break;
                 }
             }
             if (primary) {
-                $scope.diskPercent = parseInt(primary.use_percentage);
-                var usedStr = primary.used.replace('G', 'GB').replace('M', 'MB');
-                var totalStr = primary.size.replace('G', 'GB').replace('M', 'MB');
+                var pctStr = primary['used%'] || primary.use_percentage || '0%';
+                $scope.diskPercent = parseInt(pctStr);
+                var usedStr = String(primary.used || '').replace('G', 'GB').replace('M', 'MB');
+                var totalStr = String(primary.size || '').replace('G', 'GB').replace('M', 'MB');
                 $scope.diskUsedDisplay = usedStr + ' of ' + totalStr;
+                ingest('disk_read', $scope.diskPercent);
             }
         });
     }
@@ -147,6 +282,8 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
             }
             $scope.netUpload = (totalTx / 1024).toFixed(0) + ' KB';
             $scope.netDownload = (totalRx / 1024).toFixed(0) + ' KB';
+            ingest('net_rx', totalRx / 1024);
+            ingest('net_tx', totalTx / 1024);
         });
     }
 
@@ -166,8 +303,10 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
     function getBottomMetrics() {
         server.get('cpu_temp', function(resp) {
             if (resp && resp !== 'null') {
-                $scope.temp = parseInt(resp) + '°C';
-                $scope.tempStatus = parseInt(resp) < 60 ? 'OPTIMAL' : 'WARM';
+                var t = parseInt(resp);
+                $scope.temp = t + '°C';
+                $scope.tempStatus = t < 60 ? 'OPTIMAL' : 'WARM';
+                ingest('temp', t);
             }
         });
 
@@ -186,13 +325,16 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
                  var parts = resp.split(' ');
                  $scope.loadAvg = parts.length > 2 ? parts[2] : parts[0];
             }
+            ingest('load_avg', parseFloat($scope.loadAvg) || 0);
         });
 
-        // Processes - active
-        // If there's an active process endpoint? Try getting some process metric
-        // We'll mimic active processes with dummy or whatever's available, e.g. system usage or load API
-        // For now, let's just make it look somewhat dynamic or static if unavailable
-        $scope.processes = Math.floor(Math.random() * 50) + 100;
+        // Fetch real process count from the server
+        server.get('process_count', function(resp) {
+            var count = parseInt(resp);
+            if (!isNaN(count) && count > 0) {
+                $scope.processes = count;
+            }
+        });
     }
 
     // Initiators
@@ -208,6 +350,10 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
     // Initial fetch
     fetchAll();
 
+    // Initial AI poll
+    pollAlerts();
+    pollInsights();
+
     // Setup polling
     var intervalPromise = $interval(function() {
         getCpuData();
@@ -221,10 +367,17 @@ angular.module('kernelPulse').controller('DashboardCtrl', ['$scope', 'server', '
          getDiskData();
     }, 10000);
 
+    // AI polling — alerts every 5s, full insights every 15s
+    var aiAlertInterval = $interval(pollAlerts, 5000);
+    var aiInsightInterval = $interval(pollInsights, 15000);
+
     // Cleanup
     $scope.$on('$destroy', function() {
         $interval.cancel(intervalPromise);
         $interval.cancel(slowIntervalPromise);
+        $interval.cancel(aiAlertInterval);
+        $interval.cancel(aiInsightInterval);
+        if (toastTimer) $timeout.cancel(toastTimer);
     });
 
 }]);

@@ -1,4 +1,17 @@
 <div class="custom-dashboard-wrapper">
+
+    <!-- ── Toast Notifications ─────────────────────────────────────────────── -->
+    <div class="kp-toast-container" ng-class="toastVisible ? 'kp-toast-visible' : 'kp-toast-hidden'" ng-if="toastMessages.length > 0">
+        <div class="kp-toast-header">
+            <span class="kp-toast-title">KernelPulse Alert</span>
+            <button class="kp-toast-x" ng-click="dismissToast()" aria-label="Dismiss">✕</button>
+        </div>
+        <div ng-repeat="msg in toastMessages track by $index" class="kp-toast" ng-class="'kp-toast-' + toastSeverity(msg)">
+            <span class="kp-toast-msg">{{ msg }}</span>
+        </div>
+        <button class="kp-toast-dismiss" ng-click="dismissToast()">Dismiss</button>
+    </div>
+
     <div class="dashboard-header">
         <div class="header-titles">
             <h1>System Overview</h1>
@@ -123,6 +136,56 @@
             <div class="small-card-content">
                 <span class="card-label">LOAD AVG (15M)</span>
                 <div class="card-value-med">{{ loadAvg }}</div>
+            </div>
+        </div>
+
+        <!-- ══ AI INSIGHTS CARD ══════════════════════════════════════════════ -->
+        <div class="custom-card card-ai-insights">
+            <div class="card-header">
+                <span class="card-label">AI INSIGHTS</span>
+                <span class="status-badge" ng-class="'ai-overall-' + aiOverallLevel">{{ aiOverallLabel }}</span>
+            </div>
+
+            <!-- Empty / collecting state -->
+            <div class="ai-empty" ng-if="!aiHasData">
+                <span class="ai-collecting">
+                    ⏳ Collecting metric samples — anomaly detection activates after 20 samples per metric.
+                </span>
+            </div>
+
+            <!-- AI body — only shown when data is available -->
+            <div class="ai-body" ng-if="aiHasData">
+
+                <!-- Metric Status Grid -->
+                <div class="ai-section" ng-if="aiStatusEntries().length > 0">
+                    <span class="ai-section-label">Metric Status</span>
+                    <div class="ai-status-grid">
+                        <div class="ai-metric-item" ng-repeat="entry in aiStatusEntries()">
+                            <span class="ai-metric-name">{{ metricLabel(entry.metric) }}</span>
+                            <span class="ai-badge" ng-class="statusBadgeClass(entry.status)">{{ entry.status }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capacity Forecasts -->
+                <div class="ai-section" ng-if="aiExhaustionEntries().length > 0">
+                    <span class="ai-section-label">Capacity Forecast</span>
+                    <div class="ai-forecasts">
+                        <div class="ai-forecast-item" ng-repeat="entry in aiExhaustionEntries()">
+                            <span class="ai-metric-name">{{ metricLabel(entry.metric) }}</span>
+                            <span class="ai-forecast-val">Full in ~{{ entry.data.hours_label }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="ai-section" ng-if="aiAdvice.length > 0">
+                    <span class="ai-section-label">Recommendations</span>
+                    <ul class="ai-advice-list">
+                        <li ng-repeat="msg in aiAdvice track by $index" class="ai-advice-item" ng-class="adviceClass(msg)">{{ msg }}</li>
+                    </ul>
+                </div>
+
             </div>
         </div>
 
